@@ -24,6 +24,9 @@ param location            string = resourceGroup().location
 @description('Maximum Spot price in USD/hour (-1 = market rate)')
 param spotMaxPrice       int    = -1
 
+@description('Virtual machine size (fallback default)')
+param vmSize             string = 'Standard_D2s_v3'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // NAME HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -172,29 +175,6 @@ resource dataDisk 'Microsoft.Compute/disks@2022-03-02' = {
   }
 }
 
-// Add deployment script to pick first unrestricted Standard_D* SKU and output JSON
-resource pickSkuScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
-  name: 'pickSkuScript'
-  location: location
-  kind: 'AzureCLI'
-  properties: {
-    azCliVersion: '2.20.0'
-    scriptContent: '''
-      SKU=$(az vm list-skus \
-        --location ${location} \
-        --resource-type virtualMachines \
-        --size Standard_D* \
-        --all \
-        --query "[?restrictions==null].name | [0]" \
-        -o tsv)
-      jq -n --arg sku "$SKU" '{"selectedSku":$sku}' > $AZ_SCRIPTS_OUTPUT_PATH
-    '''
-    cleanupPreference: 'OnSuccess'
-    timeout: 'PT10M'
-    retentionInterval: 'PT1H'
-  }
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Ubuntu Spot VM (CAPEv2 + REMnux)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -204,14 +184,13 @@ resource linuxVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   dependsOn: [
     dataDisk
     linuxNic
-    pickSkuScript
   ]
   properties: {
     priority:       'Spot'
     evictionPolicy: 'Deallocate'
     billingProfile: { maxPrice: spotMaxPrice }
     hardwareProfile: {
-      vmSize: pickSkuScript.properties.outputs.selectedSku
+      vmSize: vmSize
     }
     osProfile: {
       computerName:       linuxVmName
@@ -275,14 +254,13 @@ resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   location: location
   dependsOn: [
     winNic
-    pickSkuScript
   ]
   properties: {
     priority:       'Spot'
     evictionPolicy: 'Deallocate'
     billingProfile: { maxPrice: spotMaxPrice }
     hardwareProfile: {
-      vmSize: pickSkuScript.properties.outputs.selectedSku
+      vmSize: vmSize
     }
     osProfile: {
       computerName:       winVmName
