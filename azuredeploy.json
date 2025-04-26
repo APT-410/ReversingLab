@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "10601295628764007835"
+      "templateHash": "18164208101155756606"
     }
   },
   "parameters": {
@@ -73,7 +73,7 @@
     },
     "capeInstallScriptUrl": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/kevoreilly/CAPEv2/main/install.sh",
+      "defaultValue": "https://raw.githubusercontent.com/kevoreilly/CAPEv2/master/installer/cape2.sh",
       "metadata": {
         "description": "CAPEv2 install script URL"
       }
@@ -334,7 +334,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "bash get-remnux.sh -y && sudo bash install.sh"
+          "commandToExecute": "bash get-remnux.sh -y && sudo bash cape2.sh"
         }
       },
       "dependsOn": [
