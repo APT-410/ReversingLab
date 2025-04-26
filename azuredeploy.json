@@ -234,6 +234,24 @@
       }
     },
     {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2023-08-01",
+      "name": "pickSkuScript",
+      "location": "[parameters('location')]",
+      "kind": "AzureCLI",
+      "properties": {
+        "azCliVersion": "2.20.0",
+        "scriptContent": "SKU=$(az vm list-skus --location [parameters('location')] --resource-type virtualMachines --size Standard_D* --all --query '[?restrictions==null].name | [0]' -o tsv); jq -n --arg sku '$SKU' '{\"selectedSku\":$sku}' > $AZ_SCRIPTS_OUTPUT_PATH",
+        "cleanupPreference": "OnSuccess",
+        "timeout": "PT10M",
+        "retentionInterval": "PT1H",
+        "storageAccountSettings": {
+          "storageAccountName": "[toLower(concat('st', uniqueString(resourceGroup().id)))]",
+          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', toLower(concat('st', uniqueString(resourceGroup().id)))), '2021-04-01').keys[0].value]"
+        }
+      }
+    },
+    {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2022-08-01",
       "name": "[variables('linuxVmName')]",
@@ -245,7 +263,7 @@
           "maxPrice": "[parameters('spotMaxPrice')]"
         },
         "hardwareProfile": {
-          "vmSize": "Standard_D4s_v3"
+          "vmSize": "[reference(resourceId('Microsoft.Resources/deploymentScripts','pickSkuScript')).outputs.selectedSku]"
         },
         "osProfile": {
           "computerName": "[variables('linuxVmName')]",
@@ -289,7 +307,8 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Compute/disks', variables('dataDiskName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('linuxNicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('linuxNicName'))]",
+        "[resourceId('Microsoft.Resources/deploymentScripts','pickSkuScript')]"
       ]
     },
     {
@@ -328,7 +347,7 @@
           "maxPrice": "[parameters('spotMaxPrice')]"
         },
         "hardwareProfile": {
-          "vmSize": "Standard_D4s_v3"
+          "vmSize": "[reference(resourceId('Microsoft.Resources/deploymentScripts','pickSkuScript')).outputs.selectedSku]"
         },
         "osProfile": {
           "computerName": "[variables('winVmName')]",
@@ -361,7 +380,9 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('winNicName'))]"
+        "[resourceId('Microsoft.Compute/disks', variables('dataDiskName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('winNicName'))]",
+        "[resourceId('Microsoft.Resources/deploymentScripts','pickSkuScript')]"
       ]
     },
     {

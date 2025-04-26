@@ -18,8 +18,7 @@
    - CAPEv2 Web UI: `http://<LINUX_IP>:8000`
 5. Shut the VMs down or rely on Spot eviction to save cost.
 
-> **Default sizes:** `Standard_D4s_v3` (4 vCPU, 6 GiB) to ensure nested virtualization & FLARE tools run smoothly.
-> Lower to `D2s_v3` in the Bicep to reduce cost if needed.
+> **VM size selection:** this template automatically picks the first available `Standard_D*` SKU in your chosen region. If you prefer a smaller or specific size, edit the Bicep and set the `hardwareProfile.vmSize` parameter manually.
 
 ### Cost @ 6 h/day (Spot)
 
