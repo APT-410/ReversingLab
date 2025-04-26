@@ -192,10 +192,6 @@ resource pickSkuScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
     cleanupPreference: 'OnSuccess'
     timeout: 'PT10M'
     retentionInterval: 'PT1H'
-    storageAccountSettings: {
-      storageAccountName: toLower('st${uniqueString(resourceGroup().id)}')
-      storageAccountKey: listKeys(resourceId('Microsoft.Storage/storageAccounts', toLower('st${uniqueString(resourceGroup().id)}')), '2021-04-01').keys[0].value
-    }
   }
 }
 

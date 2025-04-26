@@ -18,18 +18,29 @@
    - CAPEv2 Web UI: `http://<LINUX_IP>:8000`
 5. Shut the VMs down or rely on Spot eviction to save cost.
 
-> **VM size selection:** this template automatically picks the first available `Standard_D*` SKU in your chosen region. If you prefer a smaller or specific size, edit the Bicep and set the `hardwareProfile.vmSize` parameter manually.
+## How it works
+
+This template uses an **ARM deployment script** resource (`Microsoft.Resources/deploymentScripts`) to:
+
+1. **List** all `Standard_D*` VM SKUs in your chosen region.
+2. **Filter out** any SKUs restricted by subscription or zone capacity.
+3. **Select** the first available SKU and output it as JSON.
+4. **Feed** that SKU into both the Linux and Windows VM resources, so you never hit a `SkuNotAvailable` error.
+
+> **VM size selection:** this template automatically picks the first available `Standard_D*` SKU in your region. If you prefer a slower or specific size, edit the Bicep and set the `hardwareProfile.vmSize` parameter manually.
 
 ### Cost @ 6 h/day (Spot)
 
-| Item                          | Spot $/hr | 6h/day | 30 days |
-|-------------------------------|-----------|--------|---------|
-| Ubuntu (CAPEv2 + REMnux)      | $0.03     | $0.18  | $5.40   |
-| Windows 10 (FLARE-VM)         | $0.065    | $0.39  | $11.70  |
-| 512 GB Premium SSD            | —         | —      | $24.97  |
-| 2 × 128 GB OS disks           | —         | —      | $9.73   |
-| Log Analytics (≤ 5 GB)        | —         | —      | $5.00   |
-| **Total**                     |           |        | **≈ $57** |
+| Item                                         | Spot $/hr | 6 h/day | 30 days |
+|----------------------------------------------|-----------|--------|---------|
+| Ubuntu (CAPEv2 + REMnux, Standard_D2s_v3 spot) | $0.03     | $0.18   | $5.40   |
+| Windows 10 (FLARE-VM, Standard_D2s_v3 spot)   | $0.065    | $0.39   | $11.70  |
+| 512 GB Premium SSD                           | —         | —       | $24.97  |
+| 2 × 128 GB OS disks                          | —         | —       | $9.73   |
+| Log Analytics (≤ 5 GB)                       | —         | —       | $5.00   |
+| **Total**                                    |           |        | **≈ $57** |
+
+> **Note:** Prices assume Standard_D2s_v3 spot instances at current rates. Actual cost varies by region and selected SKU; use the Azure Pricing Calculator for precise estimates.
 
 Even at pay-as-you-go prices the lab stays ≈$108/mo, inside your $150 target.
 
