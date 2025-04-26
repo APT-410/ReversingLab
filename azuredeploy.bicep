@@ -2,38 +2,42 @@
 // PARAMETERS
 // ─────────────────────────────────────────────────────────────────────────────
 @description('Your public IP in CIDR, e.g. 203.0.113.10/32')
-param clientIp string
+param clientIp           string
 
 @description('Linux admin username')
 param linuxAdminUsername string
-@secure() @description('Linux admin password')
+
+@secure()
+@description('Linux admin password')
 param linuxAdminPassword string
 
 @description('Windows admin username')
 param windowsAdminUsername string
-@secure() @description('Windows admin password')
+
+@secure()
+@description('Windows admin password')
 param windowsAdminPassword string
 
-@description('Azure region (e.g. westus2)')
-param location string = resourceGroup().location
+@description('Azure region (must be westus2)')
+param location            string = resourceGroup().location
 
-@description('Max Spot price in USD/hour (-1 = current market rate)')
-param spotMaxPrice int = -1
+@description('Maximum Spot price in USD/hour (-1 = market rate)')
+param spotMaxPrice       int    = -1
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NAMING HELPERS
+// NAME HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
-var prefix       = 'cape'
-var vnetName     = '${prefix}-vnet'
-var nsgName      = '${prefix}-nsg'
-var linuxPipName = '${prefix}-linux-pip'
-var winPipName   = '${prefix}-win-pip'
-var linuxNicName = '${prefix}-linux-nic'
-var winNicName   = '${prefix}-win-nic'
-var linuxVmName  = '${prefix}-linux'
-var winVmName    = '${prefix}-win'
-var dataDiskName = '${prefix}-datadisk'
-var laName       = '${prefix}-law'
+var prefix        = 'cape'
+var vnetName      = '${prefix}-vnet'
+var nsgName       = '${prefix}-nsg'
+var linuxPipName  = '${prefix}-linux-pip'
+var winPipName    = '${prefix}-win-pip'
+var linuxNicName  = '${prefix}-linux-nic'
+var winNicName    = '${prefix}-win-nic'
+var linuxVmName   = '${prefix}-linux'
+var winVmName     = '${prefix}-win'
+var dataDiskName  = '${prefix}-datadisk'
+var laName        = '${prefix}-law'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Log Analytics Workspace
@@ -41,7 +45,9 @@ var laName       = '${prefix}-law'
 resource la 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name:     laName
   location: location
-  sku:      { name: 'PerGB2018' }
+  properties: {
+    sku:      { name: 'PerGB2018' }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,7 +59,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   properties: {
     addressSpace: { addressPrefixes: [ '10.11.0.0/16' ] }
     subnets: [
-      { name: 'sandbox'; properties: { addressPrefix: '10.11.1.0/24' } }
+      { 
+        name: 'sandbox'
+        properties: { addressPrefix: '10.11.1.0/24' } 
+      }
     ]
   }
 }
@@ -123,9 +132,9 @@ resource linuxNic 'Microsoft.Network/networkInterfaces@2020-11-01' = {
       {
         name: 'ip1'
         properties: {
-          subnet:                 { id: vnet.subnets[0].id }
-          privateIPAddressVersion: 'IPv4'
-          publicIPAddress:        { id: linuxPip.id }
+          subnet:                    { id: vnet.properties.subnets[0].id } // Corrected reference
+          privateIPAddressVersion:   'IPv4'
+          publicIPAddress:           { id: linuxPip.id }
         }
       }
     ]
@@ -140,9 +149,9 @@ resource winNic 'Microsoft.Network/networkInterfaces@2020-11-01' = {
       {
         name: 'ip1'
         properties: {
-          subnet:                 { id: vnet.subnets[0].id }
-          privateIPAddressVersion: 'IPv4'
-          publicIPAddress:        { id: winPip.id }
+          subnet:                    { id: vnet.properties.subnets[0].id } // Corrected reference
+          privateIPAddressVersion:   'IPv4'
+          publicIPAddress:           { id: winPip.id }
         }
       }
     ]
@@ -170,6 +179,7 @@ resource linuxVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   name:     linuxVmName
   location: location
   properties: {
+    // Spot config (outside hardwareProfile)
     priority:       'Spot'
     evictionPolicy: 'Deallocate'
     billingProfile: { maxPrice: spotMaxPrice }
@@ -201,17 +211,19 @@ resource linuxVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
         version:   'latest'
       }
     }
-    networkProfile: { networkInterfaces: [ { id: linuxNic.id } ] }
+    networkProfile: {
+      networkInterfaces: [ { id: linuxNic.id } ]
+    }
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CustomScript (install REMnux + CAPEv2)
+// CustomScript (REMnux + CAPEv2)
 // ─────────────────────────────────────────────────────────────────────────────
 resource linuxExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
-  parent:    linuxVm
-  name:      'init-tools'
-  location:  location
+  parent:   linuxVm
+  name:     'init-tools'
+  location: location
   properties:{
     publisher:               'Microsoft.Azure.Extensions'
     type:                    'CustomScript'
@@ -223,19 +235,17 @@ resource linuxExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
         'https://raw.githubusercontent.com/kevoreilly/CAPEv2/master/install.sh'
       ]
     }
-    protectedSettings:{
-      commandToExecute:'bash get-remnux.sh -y && sudo bash install.sh'
-    }
+    protectedSettings:{ commandToExecute:'bash get-remnux.sh -y && sudo bash install.sh' }
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Windows Server Spot VM (FLARE-VM)
+// Windows Server 2019 Spot VM (FLARE VM)
 // ─────────────────────────────────────────────────────────────────────────────
 resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   name:     winVmName
   location: location
-  properties: {
+  properties:{
     priority:       'Spot'
     evictionPolicy: 'Deallocate'
     billingProfile: { maxPrice: spotMaxPrice }
@@ -247,7 +257,7 @@ resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
       adminPassword:      windowsAdminPassword
       windowsConfiguration:{ provisionVMAgent: true }
     }
-    storageProfile: {
+    storageProfile:{
       osDisk: {
         createOption: 'FromImage'
         managedDisk:  { storageAccountType: 'StandardSSD_LRS' }
@@ -264,12 +274,12 @@ resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CustomScript (install FLARE-VM)
+// CustomScript (FLARE VM install)
 // ─────────────────────────────────────────────────────────────────────────────
 resource winExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
-  parent:    winVm
-  name:      'init-flare'
-  location:  location
+  parent:   winVm
+  name:     'init-flare'
+  location: location
   properties:{
     publisher:               'Microsoft.Compute'
     type:                    'CustomScriptExtension'
