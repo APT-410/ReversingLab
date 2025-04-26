@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "1488986201647137286"
+      "templateHash": "15106824526829722172"
     }
   },
   "parameters": {
@@ -43,7 +43,7 @@
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Azure region (e.g. westus)"
+        "description": "Azure region (e.g. eastus)"
       }
     },
     "spotMaxPrice": {
@@ -348,7 +348,7 @@
           "imageReference": {
             "publisher": "MicrosoftWindowsDesktop",
             "offer": "Windows-10",
-            "sku": "21h2-pro",
+            "sku": "RS3-Pro",
             "version": "latest"
           }
         },
