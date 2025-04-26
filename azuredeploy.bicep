@@ -21,7 +21,7 @@ param windowsAdminPassword string
 @description('Azure region (e.g. westus)')
 param location string = resourceGroup().location
 
-@description('Max Spot price in USD/hour (-1 = current market rate)')
+@description('Maximum spot price in USD/hour (-1 = current market rate)')
 param spotMaxPrice int = -1
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ var dataDiskName = '${prefix}-datadisk'
 var laName       = '${prefix}-law'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Log Analytics
+// Log Analytics Workspace
 // ─────────────────────────────────────────────────────────────────────────────
 resource la 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name:     laName
@@ -49,7 +49,7 @@ resource la 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VNet + Subnet
+// Virtual Network & Subnet
 // ─────────────────────────────────────────────────────────────────────────────
 resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   name:     vnetName
@@ -58,7 +58,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
     addressSpace: { addressPrefixes: [ '10.11.0.0/16' ] }
     subnets: [
       {
-        name: 'sandbox'
+        name:       'sandbox'
         properties: { addressPrefix: '10.11.1.0/24' }
       }
     ]
@@ -66,7 +66,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NSG (SSH + RDP only from your IP)
+// Network Security Group (SSH + RDP only from your IP)
 // ─────────────────────────────────────────────────────────────────────────────
 resource nsg 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
   name:     nsgName
@@ -121,7 +121,7 @@ resource winPip 'Microsoft.Network/publicIPAddresses@2020-11-01' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NICs
+// Network Interfaces
 // ─────────────────────────────────────────────────────────────────────────────
 resource linuxNic 'Microsoft.Network/networkInterfaces@2020-11-01' = {
   name:     linuxNicName
@@ -131,9 +131,9 @@ resource linuxNic 'Microsoft.Network/networkInterfaces@2020-11-01' = {
       {
         name: 'ip1'
         properties: {
-          subnet:                  { id: vnet.properties.subnets[0].id }
-          privateIPAddressVersion: 'IPv4'
-          publicIPAddress:         { id: linuxPip.id }
+          subnet:                    { id: vnet.properties.subnets[0].id }
+          privateIPAddressVersion:   'IPv4'
+          publicIPAddress:           { id: linuxPip.id }
         }
       }
     ]
@@ -149,9 +149,9 @@ resource winNic 'Microsoft.Network/networkInterfaces@2020-11-01' = {
       {
         name: 'ip1'
         properties: {
-          subnet:                  { id: vnet.properties.subnets[0].id }
-          privateIPAddressVersion: 'IPv4'
-          publicIPAddress:         { id: winPip.id }
+          subnet:                    { id: vnet.properties.subnets[0].id }
+          privateIPAddressVersion:   'IPv4'
+          publicIPAddress:           { id: winPip.id }
         }
       }
     ]
@@ -160,7 +160,7 @@ resource winNic 'Microsoft.Network/networkInterfaces@2020-11-01' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Data Disk for CAPEv2
+// Data Disk for CAPEv2 QCOW2 Images
 // ─────────────────────────────────────────────────────────────────────────────
 resource dataDisk 'Microsoft.Compute/disks@2022-03-02' = {
   name:     dataDiskName
@@ -173,28 +173,30 @@ resource dataDisk 'Microsoft.Compute/disks@2022-03-02' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ubuntu Spot VM (Nested, CAPEv2 + REMnux)
+// Ubuntu Spot VM (Nested Virt, CAPEv2 + REMnux)
 // ─────────────────────────────────────────────────────────────────────────────
 resource linuxVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   name:     linuxVmName
   location: location
   properties: {
+    // Spot settings must be here, outside hardwareProfile
+    priority:       'Spot'
+    evictionPolicy: 'Deallocate'
+    billingProfile: { maxPrice: spotMaxPrice }
+
     hardwareProfile: {
-      vmSize:         'Standard_D4s_v3'
-      priority:       'Spot'
-      evictionPolicy: 'Deallocate'
-      billingProfile: { maxPrice: spotMaxPrice }
+      vmSize: 'Standard_D4s_v3'
     }
     osProfile: {
-      computerName:           linuxVmName
-      adminUsername:          linuxAdminUsername
-      adminPassword:          linuxAdminPassword
-      linuxConfiguration:     { disablePasswordAuthentication: false }
+      computerName:       linuxVmName
+      adminUsername:      linuxAdminUsername
+      adminPassword:      linuxAdminPassword
+      linuxConfiguration:{ disablePasswordAuthentication: false }
     }
     storageProfile: {
       osDisk: {
-        createOption:  'FromImage'
-        managedDisk:   { storageAccountType: 'StandardSSD_LRS' }
+        createOption: 'FromImage'
+        managedDisk:  { storageAccountType: 'StandardSSD_LRS' }
       }
       dataDisks: [
         {
@@ -211,7 +213,9 @@ resource linuxVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
         version:   'latest'
       }
     }
-    networkProfile: { networkInterfaces: [ { id: linuxNic.id } ] }
+    networkProfile: {
+      networkInterfaces: [ { id: linuxNic.id } ]
+    }
   }
 }
 
@@ -246,22 +250,24 @@ resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   name:     winVmName
   location: location
   properties: {
+    // Spot settings here
+    priority:       'Spot'
+    evictionPolicy: 'Deallocate'
+    billingProfile: { maxPrice: spotMaxPrice }
+
     hardwareProfile: {
-      vmSize:         'Standard_D4s_v3'
-      priority:       'Spot'
-      evictionPolicy: 'Deallocate'
-      billingProfile: { maxPrice: spotMaxPrice }
+      vmSize: 'Standard_D4s_v3'
     }
     osProfile: {
       computerName:         winVmName
       adminUsername:        windowsAdminUsername
       adminPassword:        windowsAdminPassword
-      windowsConfiguration: { provisionVMAgent: true }
+      windowsConfiguration:{ provisionVMAgent: true }
     }
     storageProfile: {
       osDisk: {
-        createOption:  'FromImage'
-        managedDisk:   { storageAccountType: 'StandardSSD_LRS' }
+        createOption: 'FromImage'
+        managedDisk:  { storageAccountType: 'StandardSSD_LRS' }
       }
       imageReference: {
         publisher: 'MicrosoftWindowsDesktop'
@@ -270,7 +276,9 @@ resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
         version:   'latest'
       }
     }
-    networkProfile: { networkInterfaces: [ { id: winNic.id } ] }
+    networkProfile: {
+      networkInterfaces: [ { id: winNic.id } ]
+    }
   }
 }
 
