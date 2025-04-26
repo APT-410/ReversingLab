@@ -12,15 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # ① Install the Azure CLI + Bicep
-      - name: Install Azure CLI & Bicep
+      # Replace azure/setup-bicep with azure/cli
+      - name: Install Azure CLI & build template
         uses: azure/cli@v1
         with:
           inlineScript: |
             az bicep install
             az bicep build --file azuredeploy.bicep --outfile azuredeploy.json
 
-      # ② Commit the generated ARM template back to the repo
+      # Commit the generated ARM template back to the repo
       - name: Commit ARM template
         run: |
           git config user.name  'github-actions'
