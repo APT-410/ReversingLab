@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "2278199090164944717"
+      "templateHash": "2500888252450172444"
     }
   },
   "parameters": {
@@ -243,13 +243,13 @@
       "kind": "AzureCLI",
       "properties": {
         "azCliVersion": "2.20.0",
-        "scriptContent": "SKU=$(az vm list-skus --location [parameters('location')] --resource-type virtualMachines --size Standard_D* --all --query '[?restrictions==null].name | [0]' -o tsv); jq -n --arg sku '$SKU' '{\"selectedSku\":$sku}' > $AZ_SCRIPTS_OUTPUT_PATH",
+        "scriptContent": "      SKU=$(az vm list-skus \\\n        --location ${location} \\\n        --resource-type virtualMachines \\\n        --size Standard_D* \\\n        --all \\\n        --query \"[?restrictions==null].name | [0]\" \\\n        -o tsv)\n      jq -n --arg sku \"$SKU\" '{\"selectedSku\":$sku}' > $AZ_SCRIPTS_OUTPUT_PATH\n    ",
         "cleanupPreference": "OnSuccess",
         "timeout": "PT10M",
         "retentionInterval": "PT1H",
         "storageAccountSettings": {
-          "storageAccountName": "[toLower(concat('st', uniqueString(resourceGroup().id)))]",
-          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', toLower(concat('st', uniqueString(resourceGroup().id)))), '2021-04-01').keys[0].value]"
+          "storageAccountName": "[toLower(format('st{0}', uniqueString(resourceGroup().id)))]",
+          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', toLower(format('st{0}', uniqueString(resourceGroup().id)))), '2021-04-01').keys[0].value]"
         }
       }
     },
@@ -265,7 +265,7 @@
           "maxPrice": "[parameters('spotMaxPrice')]"
         },
         "hardwareProfile": {
-          "vmSize": "[reference(resourceId('Microsoft.Resources/deploymentScripts','pickSkuScript')).outputs.selectedSku]"
+          "vmSize": "[reference(resourceId('Microsoft.Resources/deploymentScripts', 'pickSkuScript'), '2023-08-01').outputs.selectedSku]"
         },
         "osProfile": {
           "computerName": "[variables('linuxVmName')]",
@@ -310,7 +310,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/disks', variables('dataDiskName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('linuxNicName'))]",
-        "[resourceId('Microsoft.Resources/deploymentScripts','pickSkuScript')]"
+        "[resourceId('Microsoft.Resources/deploymentScripts', 'pickSkuScript')]"
       ]
     },
     {
@@ -349,7 +349,7 @@
           "maxPrice": "[parameters('spotMaxPrice')]"
         },
         "hardwareProfile": {
-          "vmSize": "[reference(resourceId('Microsoft.Resources/deploymentScripts','pickSkuScript')).outputs.selectedSku]"
+          "vmSize": "[reference(resourceId('Microsoft.Resources/deploymentScripts', 'pickSkuScript'), '2023-08-01').outputs.selectedSku]"
         },
         "osProfile": {
           "computerName": "[variables('winVmName')]",
@@ -382,9 +382,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/disks', variables('dataDiskName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('winNicName'))]",
-        "[resourceId('Microsoft.Resources/deploymentScripts','pickSkuScript')]"
+        "[resourceId('Microsoft.Resources/deploymentScripts', 'pickSkuScript')]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('winNicName'))]"
       ]
     },
     {
