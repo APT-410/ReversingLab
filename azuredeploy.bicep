@@ -35,6 +35,10 @@ param vmSize             string = 'Standard_D2_v2'
 ])
 param vmPriority         string = 'Spot'
 
+// URL for the CAPEv2 install script (defaults to main branch)
+@description('CAPEv2 install script URL')
+param capeInstallScriptUrl string = 'https://raw.githubusercontent.com/kevoreilly/CAPEv2/main/install.sh'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // NAME HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -247,7 +251,7 @@ resource linuxExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
     settings:{
       fileUris: [
         'https://remnux.org/get-remnux.sh'
-        'https://raw.githubusercontent.com/kevoreilly/CAPEv2/main/install.sh'
+        capeInstallScriptUrl
       ]
     }
     protectedSettings:{ commandToExecute:'bash get-remnux.sh -y && sudo bash install.sh' }
