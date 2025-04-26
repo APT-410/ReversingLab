@@ -25,7 +25,15 @@ param location            string = resourceGroup().location
 param spotMaxPrice       int    = -1
 
 @description('Virtual machine size (fallback default)')
-param vmSize             string = 'Standard_D2s_v3'
+param vmSize             string = 'Standard_D2_v2'
+
+// VM priority: Spot or Regular (on-demand)
+@description('VM priority (Spot or Regular)')
+@allowed([
+  'Spot'
+  'Regular'
+])
+param vmPriority         string = 'Spot'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAME HELPERS
@@ -186,9 +194,9 @@ resource linuxVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
     linuxNic
   ]
   properties: {
-    priority:       'Spot'
-    evictionPolicy: 'Deallocate'
-    billingProfile: { maxPrice: spotMaxPrice }
+    priority:       vmPriority
+    evictionPolicy: vmPriority == 'Spot' ? 'Deallocate' : null
+    billingProfile: vmPriority == 'Spot' ? { maxPrice: spotMaxPrice } : null
     hardwareProfile: {
       vmSize: vmSize
     }
@@ -256,9 +264,9 @@ resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
     winNic
   ]
   properties: {
-    priority:       'Spot'
-    evictionPolicy: 'Deallocate'
-    billingProfile: { maxPrice: spotMaxPrice }
+    priority:       vmPriority
+    evictionPolicy: vmPriority == 'Spot' ? 'Deallocate' : null
+    billingProfile: vmPriority == 'Spot' ? { maxPrice: spotMaxPrice } : null
     hardwareProfile: {
       vmSize: vmSize
     }
