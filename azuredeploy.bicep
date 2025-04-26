@@ -247,7 +247,7 @@ resource linuxExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
     settings:{
       fileUris: [
         'https://remnux.org/get-remnux.sh'
-        'https://raw.githubusercontent.com/kevoreilly/CAPEv2/master/install.sh'
+        'https://raw.githubusercontent.com/kevoreilly/CAPEv2/main/install.sh'
       ]
     }
     protectedSettings:{ commandToExecute:'bash get-remnux.sh -y && sudo bash install.sh' }
