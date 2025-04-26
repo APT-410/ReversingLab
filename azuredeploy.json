@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "8443317036560260952"
+      "templateHash": "10293063225385551311"
     }
   },
   "parameters": {
@@ -323,7 +323,7 @@
         "settings": {
           "fileUris": [
             "https://remnux.org/get-remnux.sh",
-            "https://raw.githubusercontent.com/kevoreilly/CAPEv2/master/install.sh"
+            "https://raw.githubusercontent.com/kevoreilly/CAPEv2/main/install.sh"
           ]
         },
         "protectedSettings": {
