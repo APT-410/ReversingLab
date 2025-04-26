@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: azure/setup-bicep@v1
+      - uses: azure/setup-bicep@v1.2.1
       - run: az bicep build --file azuredeploy.bicep --outfile azuredeploy.json
       - run: |
           git config user.name  'github-actions'
