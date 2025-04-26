@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "5000001244746166110"
+      "templateHash": "8443317036560260952"
     }
   },
   "parameters": {
@@ -55,9 +55,20 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2s_v3",
+      "defaultValue": "Standard_D2_v2",
       "metadata": {
         "description": "Virtual machine size (fallback default)"
+      }
+    },
+    "vmPriority": {
+      "type": "string",
+      "defaultValue": "Spot",
+      "allowedValues": [
+        "Spot",
+        "Regular"
+      ],
+      "metadata": {
+        "description": "VM priority (Spot or Regular)"
       }
     }
   },
@@ -248,11 +259,9 @@
       "name": "[variables('linuxVmName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "priority": "Spot",
-        "evictionPolicy": "Deallocate",
-        "billingProfile": {
-          "maxPrice": "[parameters('spotMaxPrice')]"
-        },
+        "priority": "[parameters('vmPriority')]",
+        "evictionPolicy": "[if(equals(parameters('vmPriority'), 'Spot'), 'Deallocate', null())]",
+        "billingProfile": "[if(equals(parameters('vmPriority'), 'Spot'), createObject('maxPrice', parameters('spotMaxPrice')), null())]",
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
@@ -331,11 +340,9 @@
       "name": "[variables('winVmName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "priority": "Spot",
-        "evictionPolicy": "Deallocate",
-        "billingProfile": {
-          "maxPrice": "[parameters('spotMaxPrice')]"
-        },
+        "priority": "[parameters('vmPriority')]",
+        "evictionPolicy": "[if(equals(parameters('vmPriority'), 'Spot'), 'Deallocate', null())]",
+        "billingProfile": "[if(equals(parameters('vmPriority'), 'Spot'), createObject('maxPrice', parameters('spotMaxPrice')), null())]",
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
