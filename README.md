@@ -1,6 +1,6 @@
 # CAPEv2 • REMnux • FLARE-VM — One-Click Azure Lab
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2F<YOUR-USER>%2F<YOUR-REPO>%2Fmain%2Fazuredeploy.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAPT-410%2FReversingLab%2Fmain%2Fazuredeploy.json)
 
 ### How to use
 
