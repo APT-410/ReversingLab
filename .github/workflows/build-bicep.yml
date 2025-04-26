@@ -1,11 +1,14 @@
 name: Build Bicep → ARM
 
+permissions:
+  contents: write
+
 on:
   push:
     paths:
       - 'azuredeploy.bicep'
-      - '.github/workflows/build-bicep.yml'   # ← also trigger on workflow updates
-  workflow_dispatch: {}                       # ← allows you to hit “Run workflow” manually
+      - '.github/workflows/build-bicep.yml'
+  workflow_dispatch: {}
 
 jobs:
   build:
