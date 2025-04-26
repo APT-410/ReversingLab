@@ -6,12 +6,16 @@ param clientIp string
 
 @description('Linux admin username')
 param linuxAdminUsername string
-@secure() @description('Linux admin password')
+
+@secure()
+@description('Linux admin password')
 param linuxAdminPassword string
 
 @description('Windows admin username')
 param windowsAdminUsername string
-@secure() @description('Windows admin password')
+
+@secure()
+@description('Windows admin password')
 param windowsAdminPassword string
 
 @description('Azure region (e.g. eastus)')
@@ -53,7 +57,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   properties: {
     addressSpace: { addressPrefixes: [ '10.11.0.0/16' ] }
     subnets: [
-      { name: 'sandbox'; properties: { addressPrefix: '10.11.1.0/24' } }
+      {
+        name: 'sandbox'
+        properties: { addressPrefix: '10.11.1.0/24' }
+      }
     ]
   }
 }
