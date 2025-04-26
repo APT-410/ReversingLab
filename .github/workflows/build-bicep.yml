@@ -20,6 +20,7 @@ jobs:
             az bicep install
             az bicep build --file azuredeploy.bicep --outfile azuredeploy.json
 
+
       # Commit the generated ARM template back to the repo
       - name: Commit ARM template
         run: |
