@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "2500888252450172444"
+      "templateHash": "2582779283555259357"
     }
   },
   "parameters": {
@@ -246,11 +246,7 @@
         "scriptContent": "      SKU=$(az vm list-skus \\\n        --location ${location} \\\n        --resource-type virtualMachines \\\n        --size Standard_D* \\\n        --all \\\n        --query \"[?restrictions==null].name | [0]\" \\\n        -o tsv)\n      jq -n --arg sku \"$SKU\" '{\"selectedSku\":$sku}' > $AZ_SCRIPTS_OUTPUT_PATH\n    ",
         "cleanupPreference": "OnSuccess",
         "timeout": "PT10M",
-        "retentionInterval": "PT1H",
-        "storageAccountSettings": {
-          "storageAccountName": "[toLower(format('st{0}', uniqueString(resourceGroup().id)))]",
-          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', toLower(format('st{0}', uniqueString(resourceGroup().id)))), '2021-04-01').keys[0].value]"
-        }
+        "retentionInterval": "PT1H"
       }
     },
     {
