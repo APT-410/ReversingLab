@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "10162478490176813907"
+      "templateHash": "1488986201647137286"
     }
   },
   "parameters": {
@@ -50,7 +50,7 @@
       "type": "int",
       "defaultValue": -1,
       "metadata": {
-        "description": "Max Spot price in USD/hour (-1 = current market rate)"
+        "description": "Maximum spot price in USD/hour (-1 = current market rate)"
       }
     }
   },
@@ -239,13 +239,13 @@
       "name": "[variables('linuxVmName')]",
       "location": "[parameters('location')]",
       "properties": {
+        "priority": "Spot",
+        "evictionPolicy": "Deallocate",
+        "billingProfile": {
+          "maxPrice": "[parameters('spotMaxPrice')]"
+        },
         "hardwareProfile": {
-          "vmSize": "Standard_D4s_v3",
-          "priority": "Spot",
-          "evictionPolicy": "Deallocate",
-          "billingProfile": {
-            "maxPrice": "[parameters('spotMaxPrice')]"
-          }
+          "vmSize": "Standard_D4s_v3"
         },
         "osProfile": {
           "computerName": "[variables('linuxVmName')]",
@@ -322,13 +322,13 @@
       "name": "[variables('winVmName')]",
       "location": "[parameters('location')]",
       "properties": {
+        "priority": "Spot",
+        "evictionPolicy": "Deallocate",
+        "billingProfile": {
+          "maxPrice": "[parameters('spotMaxPrice')]"
+        },
         "hardwareProfile": {
-          "vmSize": "Standard_D4s_v3",
-          "priority": "Spot",
-          "evictionPolicy": "Deallocate",
-          "billingProfile": {
-            "maxPrice": "[parameters('spotMaxPrice')]"
-          }
+          "vmSize": "Standard_D4s_v3"
         },
         "osProfile": {
           "computerName": "[variables('winVmName')]",
