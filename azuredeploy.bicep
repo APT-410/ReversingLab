@@ -6,19 +6,15 @@ param clientIp string
 
 @description('Linux admin username')
 param linuxAdminUsername string
-
-@secure()
-@description('Linux admin password')
+@secure() @description('Linux admin password')
 param linuxAdminPassword string
 
 @description('Windows admin username')
 param windowsAdminUsername string
-
-@secure()
-@description('Windows admin password')
+@secure() @description('Windows admin password')
 param windowsAdminPassword string
 
-@description('Azure region (e.g. westus)')
+@description('Azure region (e.g. eastus)')
 param location string = resourceGroup().location
 
 @description('Maximum spot price in USD/hour (-1 = current market rate)')
@@ -27,17 +23,17 @@ param spotMaxPrice int = -1
 // ─────────────────────────────────────────────────────────────────────────────
 // VARIABLES (naming convenience)
 // ─────────────────────────────────────────────────────────────────────────────
-var prefix       = 'cape'
-var vnetName     = '${prefix}-vnet'
-var nsgName      = '${prefix}-nsg'
-var linuxPipName = '${prefix}-linux-pip'
-var winPipName   = '${prefix}-win-pip'
-var linuxNicName = '${prefix}-linux-nic'
-var winNicName   = '${prefix}-win-nic'
-var linuxVmName  = '${prefix}-linux'
-var winVmName    = '${prefix}-win'
-var dataDiskName = '${prefix}-datadisk'
-var laName       = '${prefix}-law'
+var prefix        = 'cape'
+var vnetName      = '${prefix}-vnet'
+var nsgName       = '${prefix}-nsg'
+var linuxPipName  = '${prefix}-linux-pip'
+var winPipName    = '${prefix}-win-pip'
+var linuxNicName  = '${prefix}-linux-nic'
+var winNicName    = '${prefix}-win-nic'
+var linuxVmName   = '${prefix}-linux'
+var winVmName     = '${prefix}-win'
+var dataDiskName  = '${prefix}-datadisk'
+var laName        = '${prefix}-law'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Log Analytics Workspace
@@ -49,7 +45,7 @@ resource la 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Virtual Network & Subnet
+// Virtual Network + Subnet
 // ─────────────────────────────────────────────────────────────────────────────
 resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   name:     vnetName
@@ -57,16 +53,13 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   properties: {
     addressSpace: { addressPrefixes: [ '10.11.0.0/16' ] }
     subnets: [
-      {
-        name:       'sandbox'
-        properties: { addressPrefix: '10.11.1.0/24' }
-      }
+      { name: 'sandbox'; properties: { addressPrefix: '10.11.1.0/24' } }
     ]
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Network Security Group (SSH + RDP only from your IP)
+// NSG (SSH & RDP only from your IP)
 // ─────────────────────────────────────────────────────────────────────────────
 resource nsg 'Microsoft.Network/networkSecurityGroups@2020-11-01' = {
   name:     nsgName
@@ -160,7 +153,7 @@ resource winNic 'Microsoft.Network/networkInterfaces@2020-11-01' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Data Disk for CAPEv2 QCOW2 Images
+// Data Disk for CAPEv2
 // ─────────────────────────────────────────────────────────────────────────────
 resource dataDisk 'Microsoft.Compute/disks@2022-03-02' = {
   name:     dataDiskName
@@ -173,13 +166,13 @@ resource dataDisk 'Microsoft.Compute/disks@2022-03-02' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ubuntu Spot VM (Nested Virt, CAPEv2 + REMnux)
+// Ubuntu Spot VM (CAPEv2 + REMnux)
 // ─────────────────────────────────────────────────────────────────────────────
 resource linuxVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   name:     linuxVmName
   location: location
   properties: {
-    // Spot settings must be here, outside hardwareProfile
+    // Spot controls go here:
     priority:       'Spot'
     evictionPolicy: 'Deallocate'
     billingProfile: { maxPrice: spotMaxPrice }
@@ -220,7 +213,7 @@ resource linuxVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Linux Custom Script Extension (install REMnux + CAPEv2)
+// CustomScript (REMnux + CAPEv2)
 // ─────────────────────────────────────────────────────────────────────────────
 resource linuxExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
   parent:   linuxVm
@@ -238,19 +231,18 @@ resource linuxExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
       ]
     }
     protectedSettings: {
-      commandToExecute: 'bash get-remnux.sh -y && sudo bash install.sh'
+      commandToExecute:'bash get-remnux.sh -y && sudo bash install.sh'
     }
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Windows Spot VM (FLARE-VM)
+// Windows Spot VM (Windows 10 Pro RS3-Pro + FLARE-VM)
 // ─────────────────────────────────────────────────────────────────────────────
 resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   name:     winVmName
   location: location
   properties: {
-    // Spot settings here
     priority:       'Spot'
     evictionPolicy: 'Deallocate'
     billingProfile: { maxPrice: spotMaxPrice }
@@ -272,7 +264,7 @@ resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
       imageReference: {
         publisher: 'MicrosoftWindowsDesktop'
         offer:     'Windows-10'
-        sku:       '21h2-pro'
+        sku:       'RS3-Pro'
         version:   'latest'
       }
     }
@@ -283,7 +275,7 @@ resource winVm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Windows Custom Script Extension (install FLARE-VM)
+// CustomScript (FLARE-VM)
 // ─────────────────────────────────────────────────────────────────────────────
 resource winExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
   parent:   winVm
@@ -298,7 +290,7 @@ resource winExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
       fileUris: [
         'https://raw.githubusercontent.com/fireeye/flare-vm/master/install.ps1'
       ]
-      commandToExecute: 'powershell -ExecutionPolicy Bypass -File install.ps1 -AcceptEula -AddWindowsOptionalFeatures'
+      commandToExecute:'powershell -ExecutionPolicy Bypass -File install.ps1 -AcceptEula -AddWindowsOptionalFeatures'
     }
   }
 }
