@@ -40,5 +40,3 @@ Even at pay-as-you-go prices the lab stays ≈$108/mo, inside your $150 target.
 - **Outbound**: unrestricted by default (allows CAPEv2 to pull updates). Add egress NSG blocks or INetSim for full containment.
 - **Disk encryption**: platform-managed keys by default.
 - **Spot**: VMs deallocate on price spikes; data persists.
-
-Enjoy your fully automated reversing lab! 🎉
