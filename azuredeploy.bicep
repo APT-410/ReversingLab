@@ -37,7 +37,7 @@ param vmPriority         string = 'Spot'
 
 // URL for the CAPEv2 install script (defaults to main branch)
 @description('CAPEv2 install script URL')
-param capeInstallScriptUrl string = 'https://raw.githubusercontent.com/kevoreilly/CAPEv2/main/install.sh'
+param capeInstallScriptUrl string = 'https://raw.githubusercontent.com/kevoreilly/CAPEv2/master/installer/cape2.sh'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAME HELPERS
@@ -254,7 +254,7 @@ resource linuxExt 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
         capeInstallScriptUrl
       ]
     }
-    protectedSettings:{ commandToExecute:'bash get-remnux.sh -y && sudo bash install.sh' }
+    protectedSettings:{ commandToExecute:'bash get-remnux.sh -y && sudo bash cape2.sh' }
   }
 }
 
