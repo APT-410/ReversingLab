@@ -11,8 +11,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      # Replace azure/setup-bicep with azure/cli
       - name: Install Azure CLI & build template
         uses: azure/cli@v1
         with:
